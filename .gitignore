@@ -1,3 +1,6 @@
 node_modules
 dist
 .DS_Store
+
+# Local-only working notes — kept alongside the repo, not published with it.
+VIDEO-SCRIPT.md
