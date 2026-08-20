@@ -247,7 +247,7 @@ function buildSlides(): Slide[] {
       'You breathe the same volume every minute at any depth — but down there each lungful is ' +
       `compressed. At ${d(30)} the ambient pressure is ${amb(4)}, so the identical breath drains four times ` +
       'as much from the tank. Same diver, same effort, quarter of the dive.',
-    takeaway: `${U.reserveLabel()} is your reserve — plan to turn the dive long before you reach it.`,
+    takeaway: `${U.reserveLabel()} is your reserve — plan to start ascending long before you reach it.`,
     art: `<svg viewBox="0 0 320 180" role="img" aria-label="Two tanks after twenty minutes: nearly full at the surface, under half at thirty metres">
       <defs>
         <linearGradient id="wz-gas" x1="0" y1="0" x2="0" y2="1">
