@@ -1,0 +1,625 @@
+/* =========================================================================
+   Deep Blue — global stylesheet
+   Owned by agent C. Other modules (wizard, debrief, render overlays) should
+   reuse the custom properties and the generic .panel / .btn / .pulse classes
+   defined here rather than inventing their own colours.
+   ========================================================================= */
+
+:root {
+  /* ---- palette: deep-ocean, dive-computer ---- */
+  --abyss:      #02070d;
+  --deep:       #05121e;
+  --deep-2:     #081c2c;
+  --panel-bg:   rgba(6, 22, 36, 0.72);
+  --panel-bg-solid: #071a2a;
+  --panel-brd:  rgba(120, 190, 235, 0.16);
+  --panel-brd-strong: rgba(120, 190, 235, 0.34);
+
+  --ink:        #e9f6ff;
+  --ink-dim:    #b7cede;
+  --muted:      #7e9bb1;
+  --muted-2:    #5c778c;
+
+  --accent:     #3fe0d8;   /* instrument cyan */
+  --accent-dim: rgba(63, 224, 216, 0.16);
+  --ok:         #43d69b;
+  --warn:       #ffb636;
+  --danger:     #ff4f63;
+
+  --ok-bg:      rgba(67, 214, 155, 0.14);
+  --warn-bg:    rgba(255, 182, 54, 0.14);
+  --danger-bg:  rgba(255, 79, 99, 0.16);
+
+  /* semantic hooks: widgets swap --state to recolour everything at once */
+  --state:      var(--accent);
+  --state-bg:   var(--accent-dim);
+
+  /* ---- metrics ---- */
+  --hud-w:      clamp(232px, 22vw, 300px);
+  --radius:     10px;
+  --radius-sm:  6px;
+  /* Height-proportional so the eight gauges fit any viewport continuously.
+     Stepped breakpoints left a dead band below 720px where the last widget
+     (the score) was pushed off screen. */
+  --gap:        clamp(2px, 0.8vh, 8px);
+  --pad:        clamp(4px, 1.1vh, 10px);
+
+  --font-ui: ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto,
+             "Helvetica Neue", Arial, sans-serif;
+  --font-num: ui-monospace, "SF Mono", "JetBrains Mono", "Roboto Mono",
+              Menlo, Consolas, monospace;
+
+  --shadow: 0 8px 28px rgba(0, 0, 0, 0.45);
+
+  color-scheme: dark;
+}
+
+* { box-sizing: border-box; }
+
+html, body {
+  margin: 0;
+  padding: 0;
+  height: 100%;
+  overflow: hidden;
+  background: var(--abyss);
+  color: var(--ink);
+  font-family: var(--font-ui);
+  font-size: 15px;
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
+}
+
+/* ------------------------------------------------------------------ shell */
+
+#app {
+  position: fixed;
+  inset: 0;
+  overflow: hidden;
+  background: radial-gradient(120% 80% at 50% 0%, var(--deep-2), var(--abyss) 78%);
+}
+
+#scene {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  display: block;
+}
+
+/* HUD hugs the right edge so the whole water column stays readable. */
+#hud {
+  position: absolute;
+  top: 0;
+  right: 0;
+  bottom: 0;
+  width: var(--hud-w);
+  padding: var(--pad);
+  display: flex;
+  flex-direction: column;
+  gap: var(--gap);
+  overflow-y: auto;
+  overflow-x: hidden;
+  scrollbar-width: thin;
+  scrollbar-color: var(--panel-brd) transparent;
+  pointer-events: none;               /* clicks fall through to the scene */
+  background: linear-gradient(
+    to left,
+    rgba(2, 8, 14, 0.72) 0%,
+    rgba(2, 8, 14, 0.5) 62%,
+    rgba(2, 8, 14, 0) 100%
+  );
+  z-index: 10;
+}
+
+#hud::-webkit-scrollbar { width: 6px; }
+#hud::-webkit-scrollbar-thumb { background: var(--panel-brd); border-radius: 3px; }
+
+#hud > * { pointer-events: auto; }
+
+/* ------------------------------------------------------------------ widgets */
+
+.widget {
+  position: relative;
+  background: var(--panel-bg);
+  border: 1px solid var(--panel-brd);
+  border-left: 2px solid var(--state);
+  border-radius: var(--radius);
+  padding: clamp(3px, 0.8vh, 7px) 9px clamp(4px, 0.9vh, 8px);
+  backdrop-filter: blur(7px);
+  -webkit-backdrop-filter: blur(7px);
+  transition: border-color 160ms ease, background-color 160ms ease;
+  flex: 0 0 auto;
+}
+
+.widget.ok      { --state: var(--accent); --state-bg: var(--accent-dim); }
+.widget.warn    { --state: var(--warn);   --state-bg: var(--warn-bg);
+                  background: color-mix(in srgb, var(--warn-bg) 40%, var(--panel-bg)); }
+.widget.danger  { --state: var(--danger); --state-bg: var(--danger-bg);
+                  background: color-mix(in srgb, var(--danger-bg) 46%, var(--panel-bg));
+                  border-color: rgba(255, 79, 99, 0.4); }
+
+.widget.hidden { display: none; }
+
+.widget-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 6px;
+  margin-bottom: 2px;
+}
+
+.widget-label {
+  font-size: clamp(8px, 1.15vh, 10px);
+  font-weight: 700;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+
+.widget.warn .widget-label   { color: var(--warn); }
+.widget.danger .widget-label { color: var(--danger); }
+
+/* the ⓘ badge — the doorway to every explanation */
+.info-badge {
+  flex: 0 0 auto;
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  border: 1px solid var(--panel-brd-strong);
+  background: transparent;
+  color: var(--muted);
+  font-family: var(--font-ui);
+  font-size: 11px;
+  font-weight: 700;
+  line-height: 1;
+  cursor: pointer;
+  display: grid;
+  place-items: center;
+  padding: 0;
+  transition: color 140ms ease, border-color 140ms ease, background-color 140ms ease;
+}
+
+.info-badge:hover,
+.info-badge:focus-visible {
+  color: var(--ink);
+  border-color: var(--accent);
+  background: var(--accent-dim);
+  outline: none;
+}
+
+/* ------------------------------------------------------------------ readouts */
+
+.readout {
+  display: flex;
+  align-items: baseline;
+  gap: 5px;
+}
+
+.value {
+  font-family: var(--font-num);
+  font-variant-numeric: tabular-nums;
+  font-feature-settings: "tnum" 1;
+  font-size: clamp(18px, 3.4vh, 30px);
+  font-weight: 600;
+  line-height: 1.02;
+  letter-spacing: -0.02em;
+  color: var(--ink);
+}
+
+.widget.warn .value   { color: var(--warn); }
+.widget.danger .value { color: var(--danger); }
+
+.value.sm { font-size: clamp(15px, 2.4vh, 21px); }
+
+.unit {
+  font-size: clamp(9px, 1.4vh, 12px);
+  font-weight: 600;
+  color: var(--muted);
+  letter-spacing: 0.04em;
+}
+
+.sub {
+  font-family: var(--font-num);
+  font-variant-numeric: tabular-nums;
+  font-size: clamp(9px, 1.3vh, 11px);
+  line-height: 1.3;
+  color: var(--ink-dim);
+  margin-top: 2px;
+}
+
+.sub.dim { color: var(--muted); }
+
+.note {
+  font-size: 11px;
+  line-height: 1.3;
+  color: var(--warn);
+  margin-top: 3px;
+}
+
+.widget.danger .note { color: var(--danger); }
+
+.chip {
+  display: inline-block;
+  font-size: 9px;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  padding: 2px 5px;
+  border-radius: 4px;
+  background: var(--state-bg);
+  color: var(--state);
+  border: 1px solid currentColor;
+  cursor: pointer;
+  margin-top: 4px;
+}
+
+.chip.hidden { display: none; }
+
+/* ------------------------------------------------------------------ meters */
+
+.meter {
+  position: relative;
+  height: clamp(5px, 0.9vh, 8px);
+  margin-top: clamp(3px, 0.6vh, 5px);
+  border-radius: 4px;
+  background: rgba(255, 255, 255, 0.07);
+  border: 1px solid var(--panel-brd);
+  overflow: hidden;
+}
+
+.meter.tall { height: 11px; }
+.meter.thin { height: 5px; }
+
+.meter-fill {
+  position: absolute;
+  left: 0;
+  top: 0;
+  bottom: 0;
+  width: 0;
+  background: var(--state);
+  border-radius: 3px;
+  transition: width 90ms linear, background-color 200ms ease;
+}
+
+/* fixed zone shading for the ascent-rate gauge */
+.meter.zoned {
+  background: linear-gradient(
+    to right,
+    rgba(67, 214, 155, 0.30) 0%,
+    rgba(67, 214, 155, 0.30) var(--zone, 45%),
+    rgba(255, 79, 99, 0.30) var(--zone, 45%),
+    rgba(255, 79, 99, 0.30) 100%
+  );
+}
+
+.meter-tick {
+  position: absolute;
+  top: -2px;
+  bottom: -2px;
+  width: 2px;
+  background: var(--ink);
+  opacity: 0.75;
+  border-radius: 1px;
+}
+
+.meter-needle {
+  position: absolute;
+  top: -3px;
+  bottom: -3px;
+  width: 3px;
+  margin-left: -1px;
+  border-radius: 2px;
+  background: var(--ink);
+  box-shadow: 0 0 6px rgba(0, 0, 0, 0.6);
+  transition: left 90ms linear;
+}
+
+.meter-label {
+  display: flex;
+  justify-content: space-between;
+  font-family: var(--font-num);
+  font-size: 9px;
+  color: var(--muted-2);
+  margin-top: 2px;
+  letter-spacing: 0.04em;
+}
+
+/* vertical variant, used by the tissue-loading bar if desired */
+.meter.vert {
+  height: 54px;
+  width: 10px;
+  margin-top: 0;
+}
+
+.meter.vert .meter-fill {
+  top: auto;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  width: auto;
+  height: 0;
+  transition: height 90ms linear;
+}
+
+/* ------------------------------------------------------------------ pulse */
+
+.pulse {
+  animation: pulse-ring 1.15s ease-out infinite;
+  color: var(--warn) !important;
+  border-color: var(--warn) !important;
+}
+
+@keyframes pulse-ring {
+  0%   { box-shadow: 0 0 0 0 rgba(255, 182, 54, 0.55); }
+  70%  { box-shadow: 0 0 0 7px rgba(255, 182, 54, 0); }
+  100% { box-shadow: 0 0 0 0 rgba(255, 182, 54, 0); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .pulse { animation: none; outline: 1px solid var(--warn); }
+  .meter-fill, .meter-needle { transition: none; }
+}
+
+/* ------------------------------------------------------------------ overlay */
+
+#overlay {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  padding: 24px;
+  z-index: 40;
+  pointer-events: none;
+}
+
+#overlay:not(:empty) {
+  pointer-events: auto;
+  background: rgba(1, 6, 12, 0.66);
+  backdrop-filter: blur(4px);
+  -webkit-backdrop-filter: blur(4px);
+}
+
+/* generic surface for wizard / debrief / dialogs */
+.panel {
+  background: var(--panel-bg-solid);
+  border: 1px solid var(--panel-brd-strong);
+  border-radius: 14px;
+  box-shadow: var(--shadow);
+  padding: 22px 24px;
+  max-width: 620px;
+  width: min(620px, 100%);
+  max-height: min(86vh, 760px);
+  overflow-y: auto;
+  color: var(--ink);
+  line-height: 1.55;
+}
+
+.panel h1, .panel h2 {
+  margin: 0 0 10px;
+  font-size: 22px;
+  line-height: 1.2;
+  letter-spacing: -0.01em;
+}
+
+.panel h3 {
+  margin: 16px 0 6px;
+  font-size: 13px;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--accent);
+}
+
+.panel p { margin: 0 0 10px; color: var(--ink-dim); }
+.panel strong { color: var(--ink); font-weight: 650; }
+.panel ul { margin: 0 0 10px; padding-left: 18px; color: var(--ink-dim); }
+.panel li { margin-bottom: 5px; }
+
+.panel-actions {
+  display: flex;
+  gap: 10px;
+  justify-content: flex-end;
+  margin-top: 18px;
+  flex-wrap: wrap;
+}
+
+/* ------------------------------------------------------------------ buttons */
+
+.btn {
+  appearance: none;
+  border: 1px solid var(--panel-brd-strong);
+  background: rgba(255, 255, 255, 0.05);
+  color: var(--ink);
+  font-family: var(--font-ui);
+  font-size: 14px;
+  font-weight: 600;
+  padding: 9px 16px;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: background-color 140ms ease, border-color 140ms ease,
+              transform 90ms ease;
+}
+
+.btn:hover { background: rgba(255, 255, 255, 0.1); border-color: var(--accent); }
+.btn:active { transform: translateY(1px); }
+.btn:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+
+.btn-primary {
+  background: var(--accent);
+  border-color: var(--accent);
+  color: #032027;
+}
+
+.btn-primary:hover {
+  background: color-mix(in srgb, var(--accent) 84%, white);
+  border-color: var(--accent);
+}
+
+.btn-ghost { background: transparent; border-color: transparent; color: var(--muted); }
+.btn-ghost:hover { color: var(--ink); background: rgba(255, 255, 255, 0.06); }
+
+/* ------------------------------------------------------------------ topic popover */
+
+.topic-scrim {
+  position: fixed;
+  inset: 0;
+  z-index: 90;
+  display: grid;
+  place-items: center;
+  padding: 24px;
+  background: rgba(1, 6, 12, 0.7);
+  backdrop-filter: blur(5px);
+  -webkit-backdrop-filter: blur(5px);
+  animation: topic-in 140ms ease-out;
+}
+
+@keyframes topic-in {
+  from { opacity: 0; }
+  to   { opacity: 1; }
+}
+
+.topic-card {
+  position: relative;
+  width: min(560px, 100%);
+  max-height: min(82vh, 720px);
+  overflow-y: auto;
+  background: var(--panel-bg-solid);
+  border: 1px solid var(--panel-brd-strong);
+  border-top: 3px solid var(--accent);
+  border-radius: 14px;
+  box-shadow: var(--shadow);
+  padding: 20px 24px 22px;
+}
+
+.topic-kicker {
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: var(--accent);
+}
+
+.topic-title {
+  margin: 4px 0 12px;
+  font-size: 22px;
+  line-height: 1.2;
+  letter-spacing: -0.01em;
+  padding-right: 34px;
+}
+
+.topic-body {
+  font-size: 14.5px;
+  line-height: 1.62;
+  color: var(--ink-dim);
+}
+
+.topic-body p { margin: 0 0 11px; }
+.topic-body p:last-child { margin-bottom: 0; }
+.topic-body strong { color: var(--ink); font-weight: 650; }
+.topic-body em { color: var(--accent); font-style: normal; font-weight: 600; }
+
+.topic-body .rule {
+  display: block;
+  margin: 12px 0;
+  padding: 9px 12px;
+  border-left: 2px solid var(--accent);
+  background: var(--accent-dim);
+  border-radius: 0 6px 6px 0;
+  color: var(--ink);
+  font-size: 13.5px;
+}
+
+.topic-close {
+  position: absolute;
+  top: 12px;
+  right: 12px;
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  border: 1px solid var(--panel-brd);
+  background: transparent;
+  color: var(--muted);
+  font-size: 16px;
+  line-height: 1;
+  cursor: pointer;
+  display: grid;
+  place-items: center;
+}
+
+.topic-close:hover { color: var(--ink); border-color: var(--accent); }
+.topic-close:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+
+.topic-foot {
+  margin-top: 16px;
+  font-size: 11px;
+  color: var(--muted-2);
+  letter-spacing: 0.03em;
+}
+
+/* ------------------------------------------------------------------ responsive */
+
+/* Below roughly 730px of viewport there is no type size that keeps eight
+   stacked gauges both legible and on screen, so trade width for height: two
+   narrower columns. A 1366x768 laptop lands here once browser chrome is removed.
+   The cutoff sits above the point where the single column merely *just* fits, so
+   a font substitution that makes text a little taller cannot push the last
+   widget (the score) off screen — which is the bug this replaced.
+   Screen width is the resource we have spare here, not height. */
+@media (max-height: 730px) and (min-width: 760px) {
+  :root { --hud-w: clamp(320px, 34vw, 420px); }
+  #hud {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    grid-auto-rows: min-content;
+    align-content: start;
+  }
+}
+
+@media (max-width: 900px) {
+  :root { --hud-w: 210px; }
+  .value { font-size: 22px; }
+}
+
+@media (max-width: 620px) {
+  :root { --hud-w: 100%; }
+  #hud {
+    flex-direction: row;
+    flex-wrap: wrap;
+    bottom: auto;
+    height: auto;
+    background: linear-gradient(to top, rgba(2, 8, 14, 0) 0%, rgba(2, 8, 14, 0.7) 60%);
+  }
+  .widget { flex: 1 1 140px; }
+}
+
+/* the ascent penalty reads as a deduction, not another bonus */
+.db-row.penalty span:last-child { color: var(--danger); }
+
+/* wizard unit picker */
+.wizard .wz-units {
+  display: grid; grid-template-columns: 1fr 1fr; gap: 8px;
+  margin: 2px 0 12px;   /* breathing room before the takeaway bar */
+}
+.wizard .wz-unit {
+  display: block; text-align: left; padding: 9px 11px; line-height: 1.35;
+  border-radius: var(--radius); cursor: pointer;
+}
+.wizard .wz-unit strong { display: block; font-size: 13px; margin-bottom: 3px; }
+.wizard .wz-unit em { font-style: normal; font-size: 11px; color: var(--muted); }
+.wizard .wz-unit.is-on {
+  border-color: var(--accent);
+  background: color-mix(in srgb, var(--accent) 16%, transparent);
+}
+.wizard .wz-unit.is-on strong { color: var(--accent); }
+
+/* unit switch above the gauges */
+.unit-toggle {
+  align-self: flex-end;
+  font: 700 10px/1 var(--font-num, ui-monospace, monospace);
+  letter-spacing: 0.1em; text-transform: uppercase;
+  color: var(--muted); background: var(--panel-bg);
+  border: 1px solid var(--panel-brd); border-radius: 999px;
+  padding: 4px 9px; cursor: pointer;
+}
+.unit-toggle:hover { color: var(--ink); border-color: var(--accent); }
+
+.wizard .wz-canvas { display: block; width: 100%; height: auto; border-radius: 6px; }
