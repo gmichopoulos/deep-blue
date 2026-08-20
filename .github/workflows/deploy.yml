@@ -25,7 +25,14 @@ jobs:
         with:
           node-version: 20
           cache: npm
-      - run: npm ci
+      # `npm install`, not `npm ci`: npm 11 records esbuild's per-platform
+      # packages as `extraneous` in the lockfile even from a clean install, and
+      # `npm ci` then refuses them on a different platform (EBADPLATFORM on the
+      # Linux runner for the netbsd/openharmony variants). `npm install` resolves
+      # optional platform deps correctly. We trade strict lockfile enforcement
+      # for a deploy that works; the lockfile is still committed and respected
+      # for every package that is not a platform binary.
+      - run: npm install --no-audit --no-fund
       # The build script is `tsc --noEmit && vite build`, so a type error fails
       # the deploy rather than shipping. Tests run first for the same reason.
       - run: npm test
