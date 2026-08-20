@@ -20,9 +20,13 @@ const PSI_PER_BAR = 14.5038;
  * of places that trained on US agencies; everywhere else teaches metric.
  */
 export function suggestedUnits(): UnitSystem {
+  // `navigator` is not a given: it is absent under Node 20 and earlier, which is
+  // where the test suite runs. Node 21+ happens to define it, so an unguarded
+  // read passes locally and fails in CI.
+  const nav = typeof navigator === 'undefined' ? undefined : navigator;
   const langs = [
-    ...(navigator.languages ?? []),
-    navigator.language ?? '',
+    ...(nav?.languages ?? []),
+    nav?.language ?? '',
   ].map((l) => l.toLowerCase());
   const imperialRegions = ['-us', '-pr', '-gu', '-vi', '-as', '-mp'];
   return langs.some((l) => imperialRegions.some((r) => l.endsWith(r))) ? 'imperial' : 'metric';

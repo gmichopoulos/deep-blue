@@ -166,3 +166,25 @@ describe('the simulation stays unit-agnostic', () => {
     }
   });
 });
+
+// ------------------------------------------------------- environment safety
+
+describe('unit detection does not assume a browser', () => {
+  /**
+   * REGRESSION GUARD. `suggestedUnits()` read `navigator` unguarded. Node 21+
+   * defines a `navigator` global and Node 20 does not, so this passed locally
+   * and broke the CI build — the kind of bug that only shows up on someone
+   * else's machine.
+   */
+  it('falls back to metric when navigator is absent', () => {
+    const saved = Object.getOwnPropertyDescriptor(globalThis, 'navigator');
+    // @ts-expect-error deliberately removing a global for the duration of the test
+    delete globalThis.navigator;
+    try {
+      expect(() => U.suggestedUnits()).not.toThrow();
+      expect(U.suggestedUnits()).toBe('metric');
+    } finally {
+      if (saved) Object.defineProperty(globalThis, 'navigator', saved);
+    }
+  });
+});
