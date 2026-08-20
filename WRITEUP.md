@@ -144,9 +144,9 @@ limits are separate systems.
 
 ## Time spent
 
-I was working with Claude on this for about 6.5 hours. Initial functional build finished in around 1 hour, and the remainder was spent iterating on the UX, performance, balancing, and finding/fixing bugs.
+I was working with Claude on this over a period of 7 hours. Initial functional build finished in around 1 hour, and the remainder was spent iterating on the UX, performance, balancing, and finding/fixing bugs.
 
-My own hands-on time with the lead agent — writing and aligning on the plan, playtesting, balancing and fixing — was **~2 hours of active work**. The single largest sink was not designing or building the system: it was balance measurement and iterating on the UX.
+My own hands-on time with the lead agent — writing and aligning on the plan, playtesting, balancing and fixing — was **~2-3 hours of active work**. The rest was letting the agents and sub agents work. The single largest sink was not designing or building the system: it was balance measurement and iterating on the UX.
 
 Final size: ~10,600 lines across 29 files — 786 lines of simulation, 1,290 of world and rendering,
 3,023 of procedural creature art, 3,263 of UI, and 1,292 of tests.
